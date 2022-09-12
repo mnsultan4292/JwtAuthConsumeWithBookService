@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,11 +15,11 @@ namespace JwtAuthConsumeWithBookService
         public static string _token;
         public string url = string.Empty;
         
-        public async Task<List<MasterBook>> GetBook()
+        public async Task<List<MasterBook>> GetBook(string token)
         {
             BookHttpClient<MasterBook> obj = new BookHttpClient<MasterBook>();
             url = ConfigurationManager.AppSettings["GetBookUrl"].ToString();
-            return await obj.GetDataAsync(url);
+            return await obj.GetDataAsync(url,token);
         }
 
         public async Task<string> Login()
@@ -33,7 +34,7 @@ namespace JwtAuthConsumeWithBookService
             var response = await obj.PostDataAsync(url, userLogin);
             return response.ToString();
         }
-        public async Task<int> PostBookData()
+        public async Task<int> PostBookData(string token)
         {
             url = ConfigurationManager.AppSettings["PostBook"].ToString();
             BookHttpClient<MasterBook> obj = new BookHttpClient<MasterBook>();
@@ -46,18 +47,18 @@ namespace JwtAuthConsumeWithBookService
                 PurchaseDate = DateTime.Now
             };
 
-            var response = await obj.PostDataAsync(url, masterBook);
+            var response = await obj.PostDataAsync(url, masterBook,token);
             if (response != null)
                 return Convert.ToInt32(response);
 
             return 0;
         }
 
-        public async Task<int> DeleteBook(int bookId)
+        public async Task<int> DeleteBook(int bookId,string token)
         {
             url =String.Format(ConfigurationManager.AppSettings["DeleteBook"].ToString(),bookId);
             BookHttpClient<MasterBook> obj = new BookHttpClient<MasterBook>();
-            return await obj.DeleteAsync(url, bookId);
+            return await obj.DeleteAsync(url, bookId,token);
         }
 
         static void Main(string[] args)
@@ -67,29 +68,28 @@ namespace JwtAuthConsumeWithBookService
             var tokentask = obj.Login();
             tokentask.Wait();
             _token = tokentask.Result;  // use session to assign the token and use through out the application
-            Console.WriteLine("token=" + _token + "\n");
+            Console.WriteLine("token=" + _token + "\n");           
 
-            GetBookDetails();
+            GetBookDetails(_token);
 
-            var bookDataPostTask = obj.PostBookData();
+            var bookDataPostTask = obj.PostBookData(_token);
             bookDataPostTask.Wait();
             Console.WriteLine("\n\n Book data post status= " + bookDataPostTask.Result);
-            
-            GetBookDetails();
 
-            var deleteTask = obj.DeleteBook(14);
-            deleteTask.Wait();
-            Console.WriteLine("\n\n Delete Book records status= "+deleteTask.Result);
+            GetBookDetails(_token);
 
-            GetBookDetails();
+            //var deleteTask = obj.DeleteBook(14,_token);
+            //deleteTask.Wait();
+            //Console.WriteLine("\n\n Delete Book records status= " + deleteTask.Result);
+
+            //GetBookDetails(_token);
 
             Console.ReadKey();
         }
-
-        private static void GetBookDetails()
+        private static void GetBookDetails(string token)
         {
             Program obj = new Program();
-            var bookDataTask = obj.GetBook();
+            var bookDataTask = obj.GetBook(token);
             bookDataTask.Wait();
             Console.WriteLine("\n\n Total book records are= " + bookDataTask.Result.Count);
         }
