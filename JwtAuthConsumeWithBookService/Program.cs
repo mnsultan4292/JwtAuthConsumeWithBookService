@@ -13,6 +13,7 @@ namespace JwtAuthConsumeWithBookService
     {
         public static string _token;
         public string url = string.Empty;
+        
         public async Task<List<MasterBook>> GetBook()
         {
             BookHttpClient<MasterBook> obj = new BookHttpClient<MasterBook>();
@@ -51,27 +52,46 @@ namespace JwtAuthConsumeWithBookService
 
             return 0;
         }
+
+        public async Task<int> DeleteBook(int bookId)
+        {
+            url =String.Format(ConfigurationManager.AppSettings["DeleteBook"].ToString(),bookId);
+            BookHttpClient<MasterBook> obj = new BookHttpClient<MasterBook>();
+            return await obj.DeleteAsync(url, bookId);
+        }
+
         static void Main(string[] args)
         {
             Program obj = new Program();
-            var tokenTask = obj.Login();
-            tokenTask.Wait();
-            _token = tokenTask.Result;  // Use session to assign the token and use through out the application
-            Console.WriteLine("Token="+_token+"\n");
 
-            var bookDataTask = obj.GetBook();
-            bookDataTask.Wait();
-            Console.WriteLine("\n Total book records are= " + bookDataTask.Result.Count);
+            var tokentask = obj.Login();
+            tokentask.Wait();
+            _token = tokentask.Result;  // use session to assign the token and use through out the application
+            Console.WriteLine("token=" + _token + "\n");
+
+            GetBookDetails();
 
             var bookDataPostTask = obj.PostBookData();
             bookDataPostTask.Wait();
             Console.WriteLine("\n\n Book data post status= " + bookDataPostTask.Result);
+            
+            GetBookDetails();
 
-            var bookData1Task = obj.GetBook();
-            bookData1Task.Wait();
-            Console.WriteLine("\n\n Total book records are= " + bookData1Task.Result.Count);
+            var deleteTask = obj.DeleteBook(14);
+            deleteTask.Wait();
+            Console.WriteLine("\n\n Delete Book records status= "+deleteTask.Result);
+
+            GetBookDetails();
 
             Console.ReadKey();
+        }
+
+        private static void GetBookDetails()
+        {
+            Program obj = new Program();
+            var bookDataTask = obj.GetBook();
+            bookDataTask.Wait();
+            Console.WriteLine("\n\n Total book records are= " + bookDataTask.Result.Count);
         }
     }
 }

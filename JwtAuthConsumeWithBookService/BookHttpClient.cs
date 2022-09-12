@@ -38,5 +38,16 @@ namespace JwtAuthConsumeWithBookService
                 }
             }
         }
+        public async Task<int> DeleteAsync(string url,int bookId)
+        {
+            using (var httpClient = new HttpClient())
+            {
+                using (var response = await httpClient.DeleteAsync(url))
+                {
+                    var apiResponse =await response.Content.ReadAsStringAsync();
+                    return Convert.ToInt32(apiResponse);
+                }
+            }
+        }
     }
 }
